@@ -2,11 +2,12 @@ import React, { useState, useEffect } from 'react';
 import { fetchVideos } from './YoutubeAPI';
 import VideoList from './VideoList.jsx';
 import { YTvideos } from './ytvideos.jsx';
-import { FaSun, FaMoon, FaYoutube } from 'react-icons/fa';
+import { FaSun, FaMoon, FaYoutube, FaSearch } from 'react-icons/fa';
 
 function App() {
   const [videos, setVideos] = useState([]);
   const [searchQuery, setSearchQuery] = useState('React tutorials');
+  const [searchInput, setSearchInput] = useState('');
   const [selectedVideo, setSelectedVideo] = useState(null);
   const [darkMode, setDarkMode] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -18,10 +19,7 @@ function App() {
       setError(null);
       try {
         const { items } = await fetchVideos(searchQuery);
-        setVideos(items.slice(0, 4)); // Only take the first 4 videos
-        if (items.length > 0 && !selectedVideo) {
-          setSelectedVideo(items[0].id.videoId);
-        }
+        setVideos(items.slice(0, 6)); // Show 6 videos
       } catch (err) {
         setError(err.message || 'Failed to load videos');
         setVideos([]);
@@ -35,6 +33,14 @@ function App() {
   const handleVideoSelect = (videoId) => {
     setSelectedVideo(videoId);
     window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
+  const handleSearch = (e) => {
+    e.preventDefault();
+    if (searchInput.trim()) {
+      setSearchQuery(searchInput.trim());
+      setSelectedVideo(null);
+    }
   };
 
   const toggleDarkMode = () => {
@@ -52,6 +58,29 @@ function App() {
               YouTube Clone
             </h1>
           </div>
+          <form onSubmit={handleSearch} className="flex-1 max-w-2xl mx-4">
+            <div className="relative">
+              <input
+                type="text"
+                value={searchInput}
+                onChange={(e) => setSearchInput(e.target.value)}
+                placeholder="Search videos..."
+                className={`w-full px-4 py-2 rounded-full ${
+                  darkMode 
+                    ? 'bg-gray-700 text-white placeholder-gray-400' 
+                    : 'bg-gray-100 text-gray-900 placeholder-gray-500'
+                } focus:outline-none focus:ring-2 focus:ring-blue-500`}
+              />
+              <button
+                type="submit"
+                className={`absolute right-3 top-1/2 transform -translate-y-1/2 ${
+                  darkMode ? 'text-gray-400' : 'text-gray-600'
+                }`}
+              >
+                <FaSearch />
+              </button>
+            </div>
+          </form>
           <button
             onClick={toggleDarkMode}
             className="p-2 rounded-full hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors duration-300"
@@ -83,7 +112,7 @@ function App() {
         <div className="animate-fadeIn">
           {selectedVideo && <YTvideos videoId={selectedVideo} darkMode={darkMode} />}
           <VideoList 
-            videos={videos.filter(v => v.id.videoId !== selectedVideo)} 
+            videos={selectedVideo ? videos.filter(v => v.id.videoId !== selectedVideo) : videos} 
             onVideoSelect={handleVideoSelect} 
             darkMode={darkMode} 
           />
